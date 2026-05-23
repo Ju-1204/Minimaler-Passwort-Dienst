@@ -34,6 +34,9 @@ def add_pw():
     if not user_id:
         return jsonify({"error": "user_id fehlt"}), 400
 
+    if not clear_pw:
+        return jsonify({"error": "clear_pw fehlt"}), 400
+
 
     hashed_pw = bcrypt.hashpw(
         clear_pw.encode("utf-8"),
@@ -76,7 +79,7 @@ def check_pw():
         "valid": valid
     })
 
-@app.route("/generate_pw", methods=["GET"])
+@app.route("/generate_pw", methods=["POST"])
 def generate_pw():
     data = request.get_json()
     user_id = data.get("user_id")
