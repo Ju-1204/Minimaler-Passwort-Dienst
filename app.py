@@ -20,7 +20,7 @@ def save_passwords(data):
         json.dump(data, file, indent=4)
 
 def generate_password(length=10):
-    alphabet = string.ascii_letters + string.digits + "!§$%&/?#"
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*()-_"
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 @app.route("/add_pw", methods=["POST"])
@@ -31,6 +31,10 @@ def add_pw():
     user_id = data.get("user_id")
     clear_pw = data.get("clear_pw")
 
+    if not user_id:
+        return jsonify({"error": "user_id fehlt"}), 400
+
+
     hashed_pw = bcrypt.hashpw(
         clear_pw.encode("utf-8"),
         bcrypt.gensalt()
@@ -38,7 +42,7 @@ def add_pw():
 
     passwords = load_passwords()
 
-    passwords[user_id] = hashed_pw.decode("utf-8")
+    passwords[user_id] = hashed_pw
 
     save_passwords(passwords)
 
@@ -74,9 +78,25 @@ def check_pw():
 
 @app.route("/generate_pw", methods=["GET"])
 def generate_pw():
+    data = request.get_json()
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({"error": "user_id fehlt"}), 400
+
     password = generate_password()
 
+    hashed_pw = bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
+
+    passwords = load_passwords()
+    passwords[user_id] = hashed_pw
+    save_passwords(passwords)
+
     return jsonify({
+        "user_id": user_id,
         "generated_password": password
     })
 
