@@ -38,12 +38,38 @@ def add_pw():
 
     passwords = load_passwords()
 
-    passwords[user_id] = hashed_pw
+    passwords[user_id] = hashed_pw.decode("utf-8")
 
     save_passwords(passwords)
 
     return jsonify({
         "message": "Passwort gespeichert"
+    })
+
+@app.route("/check_pw", methods=["POST"])
+def check_pw():
+
+    data = request.get_json()
+
+    user_id = data.get("user_id")
+    clear_pw = data.get("clear_pw")
+
+    passwords = load_passwords()
+
+    if user_id not in passwords:
+        return jsonify({
+            "valid": False,
+            "message": "Benutzer nicht gefunden"
+        }), 404
+
+    stored_hash = passwords[user_id].encode("utf-8")
+
+    valid = bcrypt.checkpw(
+        clear_pw.encode("utf-8"),
+        stored_hash
+    )
+    return jsonify({
+        "valid": valid
     })
 
 @app.route("/generate_pw", methods=["GET"])
